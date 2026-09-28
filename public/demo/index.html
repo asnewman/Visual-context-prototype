@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field Notes — A quieter kind of travel</title>
+  <link rel="stylesheet" href="/demo/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#">Field Notes</a>
+    <nav aria-label="Primary"><a href="#story">Stories</a><a href="#guide">Field guide</a><a href="#about">About</a></nav>
+  </header>
+
+  <main>
+    <section class="hero" id="story">
+      <p class="eyebrow">Journal 04 · California</p>
+      <h1>A quieter kind of travel</h1>
+      <p class="dek">Slow mornings, small roads, and the places we find when the itinerary leaves room for surprise.</p>
+      <a class="read-link" href="#article">Read the story <span>→</span></a>
+    </section>
+
+    <article id="article">
+      <p class="lede">The road out of town bends through the foothills, where late-summer grass catches the light like brushed copper.</p>
+      <p>We stopped without a plan, following a hand-painted sign toward an orchard at the end of a dusty lane. There was coffee under the sycamores and nowhere else we needed to be.</p>
+      <blockquote>“The best part of going slowly is noticing when you have arrived.”</blockquote>
+      <h2>Take the long way</h2>
+      <p>Not every detour becomes a story. Some simply give the day a different shape—and that is reason enough to take them.</p>
+    </article>
+  </main>
+
+  <aside class="capture-toast" aria-live="polite" data-visual-context-ignore>
+    <span class="status-dot"></span>
+    <span id="capture-status">Preparing capture…</span>
+    <button type="button" id="capture-again">Capture this page</button>
+    <a href="/dashboard">View dashboard</a>
+  </aside>
+
+  <footer><p>Made for unhurried days.</p><small>© 2026 Field Notes Journal</small></footer>
+
+  <script src="/snippet.js" data-project-id="demo-site"></script>
+  <script>
+    const status = document.querySelector("#capture-status");
+    window.addEventListener("visual-context:captured", (event) => {
+      status.textContent = `${event.detail.fragmentCount} text fragments captured`;
+      document.querySelector(".capture-toast").classList.add("is-ready");
+    });
+    window.addEventListener("visual-context:error", () => { status.textContent = "Capture failed"; });
+    document.querySelector("#capture-again").addEventListener("click", () => {
+      status.textContent = "Capturing…";
+      window.VisualContext.capture();
+    });
+  </script>
+</body>
+</html>

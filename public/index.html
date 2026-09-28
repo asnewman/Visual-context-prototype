@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual Context</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f1ea; color: #17201f; font: 16px/1.5 system-ui, sans-serif; }
+    main { width: min(620px, calc(100% - 48px)); }
+    h1 { font: 700 clamp(42px, 9vw, 78px)/.94 Georgia, serif; letter-spacing: -.05em; margin: 0 0 24px; }
+    p { color: #51605d; max-width: 52ch; }
+    nav { display: flex; gap: 12px; margin-top: 30px; }
+    a { padding: 12px 18px; color: white; background: #126d5b; border-radius: 999px; text-decoration: none; font-weight: 700; }
+    a + a { color: #126d5b; background: #dce9e4; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>See words in their natural habitat.</h1>
+    <p>Capture rendered text from a website, including its typography, position, and nearby content, then review every fragment in one focused workspace.</p>
+    <nav><a href="/demo">Open sample site</a><a href="/dashboard">Open dashboard</a></nav>
+  </main>
+</body>
+</html>

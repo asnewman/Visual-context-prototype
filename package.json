@@ -1,0 +1,14 @@
+{
+  "name": "visual-context-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Capture rendered text and review it in its surrounding visual context.",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

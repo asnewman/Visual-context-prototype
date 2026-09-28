@@ -1,6 +1,7 @@
 const results = document.querySelector("#results");
 const searchInput = document.querySelector("#search");
 const captureFilter = document.querySelector("#capture-filter");
+const clearButton = document.querySelector("#clear-captures");
 let captures = [];
 
 function text(value) {
@@ -115,7 +116,8 @@ async function load() {
   try {
     const response = await fetch("/api/captures?projectId=demo-site", { cache: "no-store" });
     if (!response.ok) throw new Error(`Request failed with ${response.status}`);
-    captures = (await response.json()).captures;
+    const data = await response.json();
+    captures = data.captures;
     const fragmentCount = captures.reduce((total, capture) => total + capture.fragments.length, 0);
     document.querySelector("#fragment-count").textContent = fragmentCount;
     document.querySelector("#capture-count").textContent = captures.length;
@@ -123,6 +125,7 @@ async function load() {
     document.querySelector("#project-count").textContent = fragmentCount;
     document.querySelector("#page-summary").textContent = captures.length ? new URL(captures[0].page.url).pathname : "No pages captured yet";
     document.querySelector("#last-updated").textContent = `Updated ${new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date())}`;
+    clearButton.disabled = data.totalCaptureCount === 0;
 
     const selected = captureFilter.value;
     captureFilter.replaceChildren(new Option("All capture runs", ""));
@@ -136,7 +139,28 @@ async function load() {
   }
 }
 
+async function clearCaptures() {
+  const confirmed = window.confirm("Clear all captured data for every project? This cannot be undone.");
+  if (!confirmed) return;
+
+  clearButton.disabled = true;
+  clearButton.textContent = "Clearing…";
+  try {
+    const response = await fetch("/api/captures", { method: "DELETE" });
+    if (!response.ok) throw new Error(`Request failed with ${response.status}`);
+    searchInput.value = "";
+    captureFilter.value = "";
+    await load();
+  } catch (error) {
+    window.alert(`Could not clear captures: ${error.message}`);
+    clearButton.disabled = false;
+  } finally {
+    clearButton.textContent = "Clear captures";
+  }
+}
+
 document.querySelector("#refresh").addEventListener("click", load);
+clearButton.addEventListener("click", clearCaptures);
 searchInput.addEventListener("input", render);
 captureFilter.addEventListener("change", render);
 load();

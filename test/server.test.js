@@ -43,6 +43,7 @@ test("stores, sanitizes, and returns a capture", async () => {
 
     const list = await fetch(`${baseUrl}/api/captures?projectId=site_one`).then((result) => result.json());
     assert.equal(list.captures.length, 1);
+    assert.equal(list.totalCaptureCount, 1);
     assert.equal(list.captures[0].fragments[0].text, "A rendered heading");
     assert.deepEqual(list.captures[0].fragments[0].style, { fontSize: "64px" });
     assert.equal(list.captures[0].fragments[0].before.text, "Introduction");
@@ -64,6 +65,30 @@ test("rejects invalid and empty capture payloads", async () => {
       body: JSON.stringify({ projectId: "valid", fragments: [] }),
     });
     assert.equal(empty.status, 400);
+  });
+});
+
+test("deletes every stored capture", async () => {
+  await withServer(async (baseUrl) => {
+    for (const projectId of ["site_one", "site_two"]) {
+      const response = await fetch(`${baseUrl}/api/captures`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ projectId, fragments: [{ text: `Text for ${projectId}` }] }),
+      });
+      assert.equal(response.status, 201);
+    }
+
+    const filtered = await fetch(`${baseUrl}/api/captures?projectId=site_one`).then((result) => result.json());
+    assert.equal(filtered.captures.length, 1);
+    assert.equal(filtered.totalCaptureCount, 2);
+
+    const response = await fetch(`${baseUrl}/api/captures`, { method: "DELETE" });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { deletedCount: 2 });
+
+    const list = await fetch(`${baseUrl}/api/captures`).then((result) => result.json());
+    assert.deepEqual(list, { captures: [], totalCaptureCount: 0 });
   });
 });
 

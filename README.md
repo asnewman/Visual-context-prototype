@@ -50,6 +50,7 @@ The snippet deliberately skips form fields, editable content, hidden elements, s
 
 - `POST /api/captures` accepts a `{ projectId, page, viewport, capturedAt, fragments }` batch.
 - `GET /api/captures?projectId=demo-site` returns newest captures first.
+- `DELETE /api/captures` permanently removes every stored capture.
 
 ## Test
 

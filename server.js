@@ -180,10 +180,11 @@ function createServer({ dataFile = DEFAULT_DATA_FILE } = {}) {
 
       if (request.method === "GET" && url.pathname === "/api/captures") {
         const projectId = cleanString(url.searchParams.get("projectId"), 80);
-        const captures = (await readStore(dataFile))
+        const allCaptures = await readStore(dataFile);
+        const captures = allCaptures
           .filter((capture) => !projectId || capture.projectId === projectId)
           .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
-        sendJson(response, 200, { captures });
+        sendJson(response, 200, { captures, totalCaptureCount: allCaptures.length });
         return;
       }
 
@@ -196,6 +197,18 @@ function createServer({ dataFile = DEFAULT_DATA_FILE } = {}) {
         });
         await writeQueue;
         sendJson(response, 201, { id: capture.id, fragmentCount: capture.fragments.length });
+        return;
+      }
+
+      if (request.method === "DELETE" && url.pathname === "/api/captures") {
+        let deletedCount = 0;
+        writeQueue = writeQueue.then(async () => {
+          const captures = await readStore(dataFile);
+          deletedCount = captures.length;
+          await writeStore(dataFile, []);
+        });
+        await writeQueue;
+        sendJson(response, 200, { deletedCount });
         return;
       }
 

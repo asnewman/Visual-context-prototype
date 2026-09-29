@@ -39,6 +39,8 @@ select { padding: 8px 30px 8px 11px; border: 1px solid #d8dedb; border-radius: 7
 .context-stage { width: 100%; min-height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .context-frame { position: relative; flex: 0 0 auto; }
 .context-viewport { position: absolute; inset: 0 auto auto 0; overflow: hidden; transform-origin: top left; }
+.context-viewport .captured-target { outline: 2px solid #e06f4f !important; outline-offset: 6px; }
+.context-viewport :is(h1, h2, h3, h4, h5, h6).captured-target { outline-offset: 20px; }
 .context-line { margin: 0; opacity: .36; overflow: hidden; text-overflow: ellipsis; white-space: nowrap !important; transform: scale(.9); transform-origin: left center; }.context-line + .target-line { margin-top: 18px; }.target-line + .context-line { margin-top: 18px; }
 .target-line { position: relative; margin-block: 0; padding-left: 14px; overflow-wrap: anywhere; }.target-line::before { content: ""; position: absolute; left: 0; top: 1px; bottom: 1px; width: 3px; border-radius: 3px; background: #df7655; }
 .fragment-meta { padding: 24px 20px; border-left: 1px solid #e2e6e3; background: #fafbfa; }

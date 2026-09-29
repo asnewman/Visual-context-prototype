@@ -33,6 +33,24 @@ test("stores, sanitizes, and returns a capture", async () => {
           path: "body>main>h1",
           style: { fontSize: "64px", position: "fixed" },
           rect: { x: 20, y: 80, width: 600, height: 90 },
+          layoutContext: {
+            rootWidth: 800,
+            rootHeight: 120,
+            crop: { x: 10, y: 5, width: 780, height: 100 },
+            backgroundColor: "rgb(255, 255, 255)",
+            tree: {
+              type: "element",
+              tag: "header",
+              style: { display: "flex", backgroundImage: "url(evil)" },
+              children: [{
+                type: "element",
+                tag: "button",
+                target: true,
+                style: { borderRadius: "999px", paddingLeft: "16px" },
+                children: [{ type: "text", value: "Bag 0" }],
+              }],
+            },
+          },
           before: { text: "Introduction", tag: "p", style: { color: "red" } },
         }],
       }),
@@ -47,6 +65,9 @@ test("stores, sanitizes, and returns a capture", async () => {
     assert.equal(list.captures[0].fragments[0].text, "A rendered heading");
     assert.deepEqual(list.captures[0].fragments[0].style, { fontSize: "64px" });
     assert.equal(list.captures[0].fragments[0].before.text, "Introduction");
+    assert.equal(list.captures[0].fragments[0].layoutContext.tree.tag, "header");
+    assert.deepEqual(list.captures[0].fragments[0].layoutContext.tree.style, { display: "flex" });
+    assert.equal(list.captures[0].fragments[0].layoutContext.tree.children[0].children[0].value, "Bag 0");
   });
 });
 

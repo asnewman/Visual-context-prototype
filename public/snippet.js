@@ -17,6 +17,19 @@
     "letterSpacing", "color", "backgroundColor", "textAlign",
     "textTransform", "textDecoration", "whiteSpace",
   ];
+  const layoutStyleKeys = [
+    ...styleKeys, "display", "position", "top", "right", "bottom", "left",
+    "boxSizing", "width", "height", "minWidth", "maxWidth", "minHeight", "maxHeight",
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
+    "marginTop", "marginRight", "marginBottom", "marginLeft",
+    "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth",
+    "borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle",
+    "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor",
+    "borderRadius", "boxShadow", "overflow", "opacity",
+    "flexDirection", "flexWrap", "alignItems", "alignContent", "alignSelf",
+    "justifyContent", "justifyItems", "justifySelf", "gap", "rowGap", "columnGap",
+    "gridTemplateColumns", "gridTemplateRows", "gridColumn", "gridRow",
+  ];
 
   function normalizeText(value) {
     return value.replace(/\s+/g, " ").trim().slice(0, 500);
@@ -37,6 +50,11 @@
   function readStyle(element) {
     const computed = getComputedStyle(element);
     return Object.fromEntries(styleKeys.map((key) => [key, computed[key]]));
+  }
+
+  function readLayoutStyle(element) {
+    const computed = getComputedStyle(element);
+    return Object.fromEntries(layoutStyleKeys.map((key) => [key, computed[key]]));
   }
 
   function elementPath(element) {
@@ -73,6 +91,70 @@
     return "rgb(255, 255, 255)";
   }
 
+  function contextRootFor(element) {
+    let root = element.parentElement || element;
+    let best = root;
+
+    for (let depth = 0; depth < 4 && root && root !== document.body; depth += 1) {
+      const count = [...root.querySelectorAll(textSelector)].filter(canCapture).length;
+      if (count <= 15) best = root;
+      if (count >= 4 && count <= 15) break;
+      root = root.parentElement;
+    }
+
+    return best;
+  }
+
+  function serializeNode(node, target, state, depth = 0) {
+    if (depth > 7 || state.count >= 80) return null;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      const value = node.textContent.replace(/\s+/g, " ").slice(0, 500);
+      return value.trim() ? { type: "text", value } : null;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE || node.matches("script,style,noscript,svg")) return null;
+    if (node !== target && !isVisible(node)) return null;
+
+    state.count += 1;
+    return {
+      type: "element",
+      tag: node.tagName.toLowerCase(),
+      target: node === target,
+      style: readLayoutStyle(node),
+      children: [...node.childNodes]
+        .map((child) => serializeNode(child, target, state, depth + 1))
+        .filter(Boolean),
+    };
+  }
+
+  function layoutContextFor(element) {
+    const root = contextRootFor(element);
+    const rootRect = root.getBoundingClientRect();
+    const relevant = [...(root.matches(textSelector) ? [root] : []), ...root.querySelectorAll(textSelector)]
+      .filter(canCapture)
+      .map((candidate) => candidate.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0);
+
+    const padding = 24;
+    const left = Math.max(0, Math.min(...relevant.map((rect) => rect.left)) - rootRect.left - padding);
+    const top = Math.max(0, Math.min(...relevant.map((rect) => rect.top)) - rootRect.top - padding);
+    const right = Math.min(rootRect.width, Math.max(...relevant.map((rect) => rect.right)) - rootRect.left + padding);
+    const bottom = Math.min(rootRect.height, Math.max(...relevant.map((rect) => rect.bottom)) - rootRect.top + padding);
+
+    return {
+      rootWidth: Math.round(rootRect.width),
+      rootHeight: Math.round(rootRect.height),
+      crop: {
+        x: Math.round(left),
+        y: Math.round(top),
+        width: Math.max(1, Math.round(right - left)),
+        height: Math.max(1, Math.round(bottom - top)),
+      },
+      backgroundColor: opaqueBackground(root),
+      tree: serializeNode(root, element, { count: 0 }),
+    };
+  }
+
   function collect() {
     const elements = [...document.querySelectorAll(textSelector)].filter(canCapture).slice(0, 100);
     const fragments = elements.map((element, index) => {
@@ -89,6 +171,7 @@
           width: Math.round(rect.width),
           height: Math.round(rect.height),
         },
+        layoutContext: layoutContextFor(element),
         before: contextFor(elements[index - 1]),
         after: contextFor(elements[index + 1]),
       };
@@ -107,14 +190,15 @@
   async function capture() {
     const payload = collect();
     if (!payload) return;
+    const body = JSON.stringify(payload);
 
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
+        body,
         credentials: "omit",
-        keepalive: true,
+        keepalive: body.length < 60_000,
       });
       if (!response.ok) throw new Error(`Collector returned ${response.status}`);
       const detail = await response.json();

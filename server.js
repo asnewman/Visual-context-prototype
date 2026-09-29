@@ -6,7 +6,7 @@ const { randomUUID } = require("node:crypto");
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DEFAULT_DATA_FILE = path.join(ROOT, "data", "captures.json");
-const MAX_BODY_BYTES = 1_000_000;
+const MAX_BODY_BYTES = 5_000_000;
 const MAX_FRAGMENTS = 100;
 
 const routes = new Map([
@@ -52,6 +52,79 @@ function cleanStyle(value) {
   );
 }
 
+function cleanLayoutStyle(value) {
+  if (!value || typeof value !== "object") return {};
+
+  const allowed = [
+    "fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight",
+    "letterSpacing", "color", "backgroundColor", "textAlign", "textTransform",
+    "textDecoration", "whiteSpace", "display", "position", "top", "right", "bottom", "left",
+    "boxSizing", "width", "height", "minWidth", "maxWidth", "minHeight", "maxHeight",
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
+    "marginTop", "marginRight", "marginBottom", "marginLeft",
+    "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth",
+    "borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle",
+    "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor",
+    "borderRadius", "boxShadow", "overflow", "opacity", "flexDirection", "flexWrap",
+    "alignItems", "alignContent", "alignSelf", "justifyContent", "justifyItems",
+    "justifySelf", "gap", "rowGap", "columnGap", "gridTemplateColumns",
+    "gridTemplateRows", "gridColumn", "gridRow",
+  ];
+
+  return Object.fromEntries(
+    allowed
+      .filter((key) => typeof value[key] === "string")
+      .map((key) => [key, value[key].slice(0, 300)]),
+  );
+}
+
+function cleanContextNode(value, state, depth = 0) {
+  if (!value || typeof value !== "object" || depth > 7 || state.count >= 80) return null;
+
+  if (value.type === "text") {
+    const text = typeof value.value === "string" ? value.value.slice(0, 500) : "";
+    return text.trim() ? { type: "text", value: text } : null;
+  }
+  if (value.type !== "element") return null;
+
+  const allowedTags = new Set([
+    "a", "article", "b", "blockquote", "button", "div", "em", "footer", "h1", "h2",
+    "h3", "h4", "h5", "h6", "header", "label", "li", "main", "nav", "ol", "p",
+    "section", "small", "span", "strong", "ul",
+  ]);
+  state.count += 1;
+  return {
+    type: "element",
+    tag: allowedTags.has(value.tag) ? value.tag : "div",
+    target: value.target === true,
+    style: cleanLayoutStyle(value.style),
+    children: Array.isArray(value.children)
+      ? value.children.map((child) => cleanContextNode(child, state, depth + 1)).filter(Boolean)
+      : [],
+  };
+}
+
+function cleanLayoutContext(value) {
+  if (!value || typeof value !== "object") return null;
+  const rootWidth = Math.max(1, Math.min(5000, Number(value.rootWidth) || 0));
+  const rootHeight = Math.max(1, Math.min(5000, Number(value.rootHeight) || 0));
+  const tree = cleanContextNode(value.tree, { count: 0 });
+  if (!tree) return null;
+
+  return {
+    rootWidth,
+    rootHeight,
+    crop: {
+      x: Math.max(0, Math.min(rootWidth, Number(value.crop?.x) || 0)),
+      y: Math.max(0, Math.min(rootHeight, Number(value.crop?.y) || 0)),
+      width: Math.max(1, Math.min(rootWidth, Number(value.crop?.width) || rootWidth)),
+      height: Math.max(1, Math.min(rootHeight, Number(value.crop?.height) || rootHeight)),
+    },
+    backgroundColor: cleanString(value.backgroundColor, 100),
+    tree,
+  };
+}
+
 function cleanContext(value) {
   if (!value || typeof value !== "object") return null;
   const text = cleanString(value.text);
@@ -89,6 +162,7 @@ function validateCapture(body) {
       style: cleanStyle(fragment.style),
       containerBackground: cleanString(fragment.containerBackground, 100),
       rect,
+      layoutContext: cleanLayoutContext(fragment.layoutContext),
       before: cleanContext(fragment.before),
       after: cleanContext(fragment.after),
     };

@@ -17,6 +17,75 @@ function safeStyle(element, style = {}) {
   keys.forEach((key) => { if (style[key]) element.style[key] = style[key]; });
 }
 
+function safeLayoutStyle(element, style = {}) {
+  const keys = [
+    "fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing",
+    "color", "backgroundColor", "textAlign", "textTransform", "textDecoration", "whiteSpace",
+    "display", "position", "top", "right", "bottom", "left", "boxSizing", "width", "height",
+    "minWidth", "maxWidth", "minHeight", "maxHeight", "paddingTop", "paddingRight",
+    "paddingBottom", "paddingLeft", "marginTop", "marginRight", "marginBottom", "marginLeft",
+    "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth",
+    "borderTopStyle", "borderRightStyle", "borderBottomStyle", "borderLeftStyle",
+    "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "borderRadius",
+    "boxShadow", "overflow", "opacity", "flexDirection", "flexWrap", "alignItems", "alignContent",
+    "alignSelf", "justifyContent", "justifyItems", "justifySelf", "gap", "rowGap", "columnGap",
+    "gridTemplateColumns", "gridTemplateRows", "gridColumn", "gridRow",
+  ];
+  keys.forEach((key) => { if (style[key]) element.style[key] = style[key]; });
+}
+
+function contextNode(node) {
+  if (node.type === "text") return text(node.value);
+
+  const element = document.createElement(node.tag || "div");
+  safeLayoutStyle(element, node.style);
+  if (node.target) element.classList.add("captured-target");
+  if (element.matches("button,a")) {
+    element.tabIndex = -1;
+    element.style.pointerEvents = "none";
+  }
+  element.append(...(node.children || []).map(contextNode));
+  return element;
+}
+
+function spatialContext(fragment) {
+  const context = fragment.layoutContext;
+  if (!context?.tree) return null;
+
+  const preview = document.createElement("div");
+  preview.className = "context-preview has-layout";
+  preview.style.backgroundColor = context.backgroundColor || fragment.containerBackground || "white";
+
+  const stage = document.createElement("div");
+  stage.className = "context-stage";
+  const frame = document.createElement("div");
+  frame.className = "context-frame";
+  const viewport = document.createElement("div");
+  viewport.className = "context-viewport";
+  viewport.style.width = `${context.crop.width}px`;
+  viewport.style.height = `${context.crop.height}px`;
+
+  const root = contextNode(context.tree);
+  root.style.position = "absolute";
+  root.style.width = `${context.rootWidth}px`;
+  root.style.height = `${context.rootHeight}px`;
+  root.style.left = `${-context.crop.x}px`;
+  root.style.top = `${-context.crop.y}px`;
+  viewport.append(root);
+  frame.append(viewport);
+  stage.append(frame);
+  preview.append(stage);
+
+  requestAnimationFrame(() => {
+    const scale = Math.min(1, (preview.clientWidth - 48) / context.crop.width);
+    frame.style.width = `${context.crop.width * scale}px`;
+    frame.style.height = `${context.crop.height * scale}px`;
+    viewport.style.transform = `scale(${scale})`;
+  });
+
+  return preview;
+}
+
 function contextLine(context) {
   if (!context) return null;
   const line = document.createElement("p");
@@ -55,7 +124,12 @@ function fragmentCard(fragment) {
   const card = document.createElement("article");
   card.className = "fragment-card";
 
-  const preview = document.createElement("div");
+  const preview = spatialContext(fragment) || document.createElement("div");
+  if (fragment.layoutContext) {
+    card.append(preview, metadata(fragment));
+    return card;
+  }
+
   preview.className = "context-preview";
   preview.style.backgroundColor = fragment.containerBackground || "white";
   const before = contextLine(fragment.before);

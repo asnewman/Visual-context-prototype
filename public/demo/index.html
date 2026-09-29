@@ -3,30 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Field Notes — A quieter kind of travel</title>
+  <title>Wagwell — Better goods for very good pets</title>
   <link rel="stylesheet" href="/demo/styles.css">
 </head>
 <body>
+  <div class="announcement"><p>Free shipping on orders $45+ <span>·</span> Happiness guaranteed</p></div>
   <header class="site-header">
-    <a class="brand" href="#">Field Notes</a>
-    <nav aria-label="Primary"><a href="#story">Stories</a><a href="#guide">Field guide</a><a href="#about">About</a></nav>
+    <a class="brand" href="#"><span class="brand-mark">W</span> Wagwell</a>
+    <nav aria-label="Primary"><a href="#shop">Shop</a><a href="#bestsellers">Best sellers</a><a href="#why">Why Wagwell</a></nav>
+    <button class="bag-button" type="button" aria-label="Shopping bag">Bag <span id="bag-count">0</span></button>
   </header>
 
   <main>
-    <section class="hero" id="story">
-      <p class="eyebrow">Journal 04 · California</p>
-      <h1>A quieter kind of travel</h1>
-      <p class="dek">Slow mornings, small roads, and the places we find when the itinerary leaves room for surprise.</p>
-      <a class="read-link" href="#article">Read the story <span>→</span></a>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Good things for good pets</p>
+        <h1>Make their whole day.</h1>
+        <p class="dek">Thoughtful toys, wholesome treats, and walk-ready essentials designed for more tail wags and better days together.</p>
+        <div class="hero-actions">
+          <button class="primary-button" type="button" data-scroll-to-products>Shop best sellers</button>
+          <button class="secondary-button" type="button">Build a treat box</button>
+        </div>
+        <p class="rating"><span>★★★★★</span> Loved by 12,000+ pets and their people</p>
+      </div>
+      <div class="hero-visual" role="img" aria-label="Happy golden retriever relaxing at home">
+        <div class="hero-note"><strong>Pet-approved</strong><small>Tested by our very opinionated office dogs</small></div>
+      </div>
     </section>
 
-    <article id="article">
-      <p class="lede">The road out of town bends through the foothills, where late-summer grass catches the light like brushed copper.</p>
-      <p>We stopped without a plan, following a hand-painted sign toward an orchard at the end of a dusty lane. There was coffee under the sycamores and nowhere else we needed to be.</p>
-      <blockquote>“The best part of going slowly is noticing when you have arrived.”</blockquote>
-      <h2>Take the long way</h2>
-      <p>Not every detour becomes a story. Some simply give the day a different shape—and that is reason enough to take them.</p>
-    </article>
+    <section class="benefits" id="why" aria-label="Why shop with Wagwell">
+      <p><span>♡</span><strong>Pet-safe by design</strong>Materials you can feel good about</p>
+      <p><span>♻</span><strong>Lighter footprint</strong>Low-waste packaging and shipping</p>
+      <p><span>☀</span><strong>Happiness guaranteed</strong>Not a hit? We’ll make it right</p>
+    </section>
+
+    <section class="products-section" id="bestsellers">
+      <div class="section-heading">
+        <div><p class="eyebrow">The pack has spoken</p><h2>Current favorites</h2></div>
+        <a href="#shop">Shop all goods <span>→</span></a>
+      </div>
+      <div class="product-grid" id="shop">
+        <article class="product-card">
+          <div class="product-image toy"><span class="product-badge">Best seller</span></div>
+          <div class="product-details">
+            <div><h3>The Wonder Ball</h3><p>Natural rubber enrichment toy</p></div>
+            <p class="price">$18</p>
+          </div>
+          <button class="add-button" type="button" data-add-to-bag>Add Wonder Ball to bag</button>
+        </article>
+        <article class="product-card">
+          <div class="product-image treats"><span class="product-badge">New</span></div>
+          <div class="product-details">
+            <div><h3>Sunday Roast Bites</h3><p>Chicken, carrots, and happy dances</p></div>
+            <p class="price">$14</p>
+          </div>
+          <button class="add-button" type="button" data-add-to-bag>Add Sunday Roast Bites to bag</button>
+        </article>
+        <article class="product-card">
+          <div class="product-image walk"></div>
+          <div class="product-details">
+            <div><h3>Everyday Walk Kit</h3><p>Leash, waste bag holder, and pouch</p></div>
+            <p class="price">$48</p>
+          </div>
+          <button class="add-button" type="button" data-add-to-bag>Add Everyday Walk Kit to bag</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="story-panel">
+      <p class="eyebrow">Made with care</p>
+      <h2>Better for pets.<br>Better for the planet.</h2>
+      <p>We choose durable, responsible materials and partner with makers who share our belief that pet goods should bring joy without creating unnecessary waste.</p>
+      <button class="story-button" type="button">Meet our makers</button>
+    </section>
   </main>
 
   <aside class="capture-toast" aria-live="polite" data-visual-context-ignore>
@@ -36,7 +85,7 @@
     <a href="/dashboard">View dashboard</a>
   </aside>
 
-  <footer><p>Made for unhurried days.</p><small>© 2026 Field Notes Journal</small></footer>
+  <footer><p><span class="brand-mark">W</span> Wagwell</p><small>Better goods for very good pets. © 2026 Wagwell</small></footer>
 
   <script src="/snippet.js" data-project-id="demo-site"></script>
   <script>
@@ -49,6 +98,16 @@
     document.querySelector("#capture-again").addEventListener("click", () => {
       status.textContent = "Capturing…";
       window.VisualContext.capture();
+    });
+    document.querySelector("[data-scroll-to-products]").addEventListener("click", () => {
+      document.querySelector("#bestsellers").scrollIntoView({ behavior: "smooth" });
+    });
+    document.querySelectorAll("[data-add-to-bag]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const count = document.querySelector("#bag-count");
+        count.textContent = Number(count.textContent) + 1;
+        button.textContent = "Added to bag ✓";
+      });
     });
   </script>
 </body>
